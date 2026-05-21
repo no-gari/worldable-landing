@@ -13,14 +13,7 @@ export const metadata: Metadata = {
     description: 'Worldable turns plain English into a production-ready World Mini App — with World ID, Wallet Auth, and Pay wired in.',
     url: 'https://worldable.app',
     siteName: 'Worldable',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Worldable Open Graph Image',
-      },
-    ],
+
     locale: 'en_US',
     type: 'website',
   },
