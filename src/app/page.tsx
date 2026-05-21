@@ -1148,7 +1148,7 @@ export default function Home() {
             <a href="#">Docs</a>
             <a href="#">Examples</a>
             <a href="#">Pricing</a>
-            <a href="#">X / Twitter</a>
+            <a href="https://x.com/worldable_app">X / Twitter</a>
           </div>
           <div className="copy">
             © 2026 Worldable. Built for the World ecosystem.
