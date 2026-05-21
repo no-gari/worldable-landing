@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Worldable — Build World Mini Apps from a sentence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #0a0a0a;
+    --ink-2: #1a1a1a;
+    --muted: #6b6b6b;
+    --line: #ececec;
+    --line-2: #f4f4f4;
+    --chip: #f6f6f6;
+    --accent: #0a0a0a;
+    --orb: radial-gradient(circle at 30% 30%, #ffffff 0%, #d8d8d8 20%, #8a8a8a 55%, #1a1a1a 100%);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: 'Manrope', sans-serif; -webkit-font-smoothing: antialiased; }
+  body { overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- NAV ---------- */
+  nav.top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(150%) blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+  .logo .orb { width: 22px; height: 22px; border-radius: 50%; background: var(--orb); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--ink-2); }
+  .nav-links a { opacity: 0.7; transition: opacity .2s; }
+  .nav-links a:hover { opacity: 1; }
+  .nav-cta { background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: transform .2s, background .2s; }
+  .nav-cta:hover { transform: translateY(-1px); background: #222; }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  /* ---------- HERO ---------- */
+  .hero { padding: 88px 0 64px; position: relative; }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(600px 380px at 78% 18%, rgba(0,0,0,0.04), transparent 70%), radial-gradient(500px 360px at 8% 80%, rgba(0,0,0,0.035), transparent 70%);
+    pointer-events: none;
+  }
+  .pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: #fff; padding: 7px 14px; border-radius: 999px; font-size: 12.5px; color: var(--ink-2); letter-spacing: 0.01em; margin-bottom: 28px; }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #0a0a0a; }
+
+  h1.headline { font-size: clamp(44px, 7vw, 96px); line-height: 0.96; letter-spacing: -0.04em; font-weight: 700; max-width: 1000px; }
+  h1.headline em { font-style: normal; background: linear-gradient(180deg, #4a4a4a 0%, #0a0a0a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; position: relative; }
+  h1.headline .orb-inline { display: inline-block; vertical-align: middle; width: 0.78em; height: 0.78em; border-radius: 50%; background: var(--orb); margin: 0 0.12em 0.12em 0.08em; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .sub { margin-top: 28px; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.55; color: var(--muted); max-width: 620px; }
+
+  .cta-row { margin-top: 40px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--ink); color: #fff; padding: 16px 28px; border-radius: 999px; font-size: 15px; font-weight: 600; transition: transform .2s, background .2s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary:hover { transform: translateY(-2px); background: #222; }
+  .btn-primary svg { transition: transform .2s; }
+  .btn-primary:hover svg { transform: translateX(3px); }
+  .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); padding: 15px 26px; border-radius: 999px; font-size: 15px; font-weight: 600; transition: background .2s; }
+  .btn-secondary:hover { background: var(--line-2); }
+
+  /* Hero builder mock */
+  .builder { margin-top: 80px; border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.18), 0 6px 20px -10px rgba(0,0,0,0.08); overflow: hidden; position: relative; }
+  .builder-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); background: #fafafa; }
+  .dots { display: flex; gap: 6px; }
+  .dots span { width: 10px; height: 10px; border-radius: 50%; background: #e2e2e2; }
+  .builder-bar .url { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); background: #fff; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); }
+  .builder-body { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 420px; }
+  @media (max-width: 860px) { .builder-body { grid-template-columns: 1fr; } }
+  .prompt-side { padding: 32px 32px 28px; border-right: 1px solid var(--line); background: #fff; }
+  @media (max-width: 860px) { .prompt-side { border-right: none; border-bottom: 1px solid var(--line); } }
+  .label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
+  .prompt-box { border: 1px solid var(--line); border-radius: 16px; padding: 18px; font-size: 16px; line-height: 1.5; min-height: 130px; background: #fafafa; color: var(--ink); position: relative; font-family: 'Manrope', sans-serif; }
+  .caret { display: inline-block; width: 2px; height: 1em; background: var(--ink); vertical-align: -3px; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .gen-btn { margin-top: 16px; width: 100%; background: var(--ink); color: #fff; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .chips { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font-size: 12px; padding: 7px 12px; background: var(--chip); border-radius: 999px; color: var(--ink-2); border: 1px solid var(--line); }
+
+  .preview-side { background: linear-gradient(180deg, #fafafa 0%, #f2f2f2 100%); padding: 28px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .phone { width: 240px; height: 480px; background: #000; border-radius: 36px; padding: 10px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05); position: relative; }
+  .phone-screen { background: #fff; border-radius: 28px; height: 100%; width: 100%; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+  .phone-status { display: flex; justify-content: space-between; padding: 14px 22px 6px; font-size: 10px; font-weight: 600; color: var(--ink); }
+  .phone-content { flex: 1; padding: 14px 18px; display: flex; flex-direction: column; }
+  .app-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 14px; }
+  .vote-card { background: #fafafa; border-radius: 14px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--line); font-size: 12px; }
+  .vote-card strong { display: block; margin-bottom: 6px; font-size: 13px; }
+  .vote-card .bar { height: 6px; background: #e8e8e8; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .vote-card .bar div { height: 100%; background: var(--ink); border-radius: 999px; }
+  .verify-btn { margin-top: auto; background: var(--ink); color: #fff; padding: 12px; border-radius: 999px; font-size: 12px; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .verify-btn .mini-orb { width: 10px; height: 10px; border-radius: 50%; background: var(--orb); }
+  .phone-notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 80px; height: 18px; background: #000; border-radius: 999px; z-index: 2; }
+
+  /* ---------- SECTION HEADERS ---------- */
+  section { padding: 100px 0; border-top: 1px solid var(--line); }
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 18px; }
+  h2.section-title { font-size: clamp(36px, 5vw, 64px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 700; max-width: 820px; }
+  .section-sub { margin-top: 22px; font-size: 18px; line-height: 1.55; color: var(--muted); max-width: 600px; }
+
+  /* ---------- PROBLEM ---------- */
+  .problem-grid { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .problem-grid { grid-template-columns: 1fr; } }
+  .prob-card { border: 1px solid var(--line); border-radius: 24px; padding: 32px; background: #fff; position: relative; overflow: hidden; }
+  .prob-card.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .prob-tag { display: inline-block; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); margin-bottom: 20px; font-weight: 600; }
+  .prob-card.dark .prob-tag { border-color: rgba(255,255,255,0.2); color: #fff; }
+  .prob-card h3 { font-size: 28px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 700; margin-bottom: 14px; }
+  .prob-card p { color: var(--muted); line-height: 1.55; font-size: 15px; }
+  .prob-card.dark p { color: rgba(255,255,255,0.7); }
+
+  /* Problem visualizations */
+  .prob-viz { margin-top: 24px; }
+  .prob-viz-light { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .prob-viz-light .v-chip { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 10px; background: var(--line-2); border-radius: 6px; color: var(--ink); animation: prob-light 3s infinite; opacity: 0.7; }
+  .prob-viz-light .v-chip:nth-child(2) { animation-delay: 0.4s; }
+  .prob-viz-light .v-chip:nth-child(3) { animation-delay: 0.8s; }
+  .prob-viz-light .v-chip:nth-child(4) { animation-delay: 1.2s; }
+  .prob-viz-light .v-arrow { color: var(--muted); font-size: 14px; }
+  .prob-viz-light .v-result { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 10px; background: var(--ink); color: #fff; border-radius: 6px; }
+  @keyframes prob-light { 0%, 70%, 100% { opacity: 0.4; } 20% { opacity: 1; transform: translateY(-2px); } }
+
+  .stack-stack { margin-top: 24px; display: flex; flex-direction: column; gap: 6px; }
+  .stack-row-x { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .stack-row-x .err { margin-left: auto; color: #ff6b6b; font-size: 10px; opacity: 0; animation: err-flash 4s infinite; }
+  .stack-row-x:nth-child(1) .err { animation-delay: 0s; }
+  .stack-row-x:nth-child(2) .err { animation-delay: 0.6s; }
+  .stack-row-x:nth-child(3) .err { animation-delay: 1.2s; }
+  .stack-row-x:nth-child(4) .err { animation-delay: 1.8s; }
+  .stack-row-x:nth-child(5) .err { animation-delay: 2.4s; }
+  @keyframes err-flash { 0%, 30%, 100% { opacity: 0; } 5%, 25% { opacity: 1; } }
+  .stack-row-x .marker { width: 14px; height: 14px; border-radius: 3px; background: rgba(255,255,255,0.15); display: inline-flex; align-items: center; justify-content: center; font-size: 8px; }
+
+  /* ---------- HOW IT WORKS — BIG BUILD VIZ ---------- */
+  .build-viz { margin-top: 70px; border: 1px solid var(--line); border-radius: 28px; background: linear-gradient(180deg, #fbfbfb 0%, #f1f1f1 100%); padding: 48px 32px; display: grid; grid-template-columns: 1fr 56px 1.4fr 56px 1fr; gap: 16px; align-items: stretch; min-height: 380px; position: relative; overflow: hidden; }
+  @media (max-width: 900px) { .build-viz { grid-template-columns: 1fr; gap: 16px; padding: 32px 20px; } }
+
+  .bv-stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .bv-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .bv-prompt-box { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px; font-size: 13px; line-height: 1.5; flex: 1; min-height: 140px; color: var(--ink); box-shadow: 0 10px 30px -20px rgba(0,0,0,0.2); display: flex; align-items: flex-start; }
+
+  .bv-connector { position: relative; display: flex; align-items: center; justify-content: center; }
+  .bv-connector-line { width: 100%; height: 1px; background: var(--line); position: relative; }
+  @media (max-width: 900px) { .bv-connector { height: 28px; } .bv-connector-line { width: 1px; height: 100%; } }
+  .bv-dot { position: absolute; top: 50%; left: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); animation: dotFlow 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1); }
+  .bv-dot.d2 { animation-delay: 0.5s; }
+  .bv-dot.d3 { animation-delay: 1s; }
+  @keyframes dotFlow { 0%, 100% { left: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+  @media (max-width: 900px) {
+    .bv-dot { animation-name: dotFlowV; top: 0; left: 50%; }
+    @keyframes dotFlowV { 0%, 100% { top: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+  }
+
+  .bv-engine-canvas { position: relative; flex: 1; min-height: 240px; background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .bv-core { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4; }
+  .bv-core-orb { display: block; width: 38px; height: 38px; border-radius: 50%; background: var(--orb); box-shadow: 0 0 30px rgba(0,0,0,0.25); animation: corePulse 2.4s infinite ease-in-out; }
+  @keyframes corePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  .bv-core-ring { position: absolute; top: 50%; left: 50%; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--ink); transform: translate(-50%, -50%); animation: ringPulse 2.4s infinite ease-out; }
+  .bv-core-ring.r2 { animation-delay: 0.8s; }
+  @keyframes ringPulse { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; } }
+
+  .bv-node { position: absolute; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 11px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 3; box-shadow: 0 4px 12px -6px rgba(0,0,0,0.08); animation: nodePulse 3.5s infinite; }
+  .bv-node .n-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink); }
+  .n-worldid { top: 14%; left: 8%; animation-delay: 0s; }
+  .n-wallet { top: 14%; right: 8%; animation-delay: 0.7s; }
+  .n-pay { bottom: 14%; left: 8%; animation-delay: 1.4s; }
+  .n-minikit { bottom: 14%; right: 8%; animation-delay: 2.1s; }
+  @keyframes nodePulse { 0%, 75%, 100% { border-color: var(--line); transform: scale(1); } 5% { border-color: var(--ink); transform: scale(1.06); box-shadow: 0 4px 16px -4px rgba(0,0,0,0.2); } 20% { border-color: var(--line); transform: scale(1); } }
+
+  .bv-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+  .bv-lines line { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.25; animation: lineFlow 3s infinite linear; }
+  .bv-lines .l2 { animation-delay: 0.7s; }
+  .bv-lines .l3 { animation-delay: 1.4s; }
+  .bv-lines .l4 { animation-delay: 2.1s; }
+  @keyframes lineFlow { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -28; } }
+
+  .bv-code-stream { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 2px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(0,0,0,0.35); text-align: center; z-index: 1; pointer-events: none; }
+  .bv-code-stream .cl { opacity: 0; animation: codeFade 5s infinite; }
+  .bv-code-stream .cl:nth-child(1) { animation-delay: 0s; }
+  .bv-code-stream .cl:nth-child(2) { animation-delay: 1s; }
+  .bv-code-stream .cl:nth-child(3) { animation-delay: 2s; }
+  .bv-code-stream .cl:nth-child(4) { animation-delay: 3s; }
+  .bv-code-stream .cl:nth-child(5) { animation-delay: 4s; }
+  @keyframes codeFade { 0%, 25%, 100% { opacity: 0; transform: translateY(4px); } 5%, 20% { opacity: 0.55; transform: translateY(0); } }
+
+  .bv-result-wrap { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .bv-result-phone { width: 100%; max-width: 170px; aspect-ratio: 9/17; background: #000; border-radius: 22px; padding: 7px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.4); position: relative; }
+  .bv-result-screen { background: #fff; border-radius: 16px; width: 100%; height: 100%; padding: 14px 11px 11px; display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
+  .bv-result-app-title { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; opacity: 0; animation: rfIn 0.6s 0.3s forwards; }
+  .bv-result-card { background: #fafafa; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; opacity: 0; animation: rfIn 0.6s forwards; }
+  .bv-result-card:nth-of-type(2) { animation-delay: 0.6s; }
+  .bv-result-card:nth-of-type(3) { animation-delay: 0.9s; }
+  .bv-result-card strong { display: block; font-size: 9px; margin-bottom: 4px; }
+  .bv-result-card .pct { font-size: 8px; color: var(--muted); }
+  .bv-result-bar { height: 3px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 4px; }
+  .bv-result-bar > div { height: 100%; background: var(--ink); border-radius: 999px; width: 0; animation: barFill 1.5s 1.2s forwards ease-out; }
+  .bv-result-card:nth-of-type(3) .bv-result-bar > div { --w: 54%; animation-delay: 1.5s; }
+  @keyframes barFill { to { width: var(--w, 72%); } }
+  .bv-result-verify { margin-top: auto; background: var(--ink); color: #fff; padding: 7px; border-radius: 999px; font-size: 9px; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; opacity: 0; animation: rfIn 0.6s 1.4s forwards; }
+  .bv-result-verify .mini-orb { width: 7px; height: 7px; border-radius: 50%; background: var(--orb); }
+  @keyframes rfIn { to { opacity: 1; } }
+
+  /* 6 step cards below */
+  .flow { margin-top: 40px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  @media (max-width: 1080px) { .flow { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px) { .flow { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 380px) { .flow { grid-template-columns: 1fr; } }
+  .flow-step { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: #fff; transition: transform .2s, border-color .2s; }
+  .flow-step:hover { transform: translateY(-3px); border-color: #d6d6d6; }
+  .flow-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+  .flow-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .flow-step h4 { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .flow-step p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ---------- EXAMPLES with mini app previews ---------- */
+  .examples { margin-top: 60px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .examples { grid-template-columns: 1fr; } }
+  .ex-card { border: 1px solid var(--line); border-radius: 22px; padding: 0; background: #fff; transition: transform .2s, box-shadow .2s; display: flex; flex-direction: column; overflow: hidden; }
+  .ex-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -25px rgba(0,0,0,0.15); }
+
+  .ex-preview { height: 220px; background: linear-gradient(180deg, #fafafa, #f0f0f0); border-bottom: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; }
+
+  /* Voting preview */
+  .ex-preview .ex-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+  .vote-row { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font-size: 11px; }
+  .vote-row .vr-q { font-weight: 600; color: var(--ink); margin-bottom: 5px; }
+  .vote-row .vr-meta { font-size: 9px; color: var(--muted); margin-bottom: 5px; }
+  .vote-row .vr-bar { height: 4px; background: var(--line-2); border-radius: 999px; overflow: hidden; }
+  .vote-row .vr-bar > div { height: 100%; background: var(--ink); border-radius: 999px; width: 0; animation: vbar 2.5s infinite ease-out; }
+  .vote-row.r2 .vr-bar > div { --tw: 54%; animation-delay: 0.4s; }
+  @keyframes vbar { 0%, 100% { width: 0; } 30%, 80% { width: var(--tw, 72%); } }
+  .vote-verify-pill { margin-top: auto; align-self: flex-start; background: var(--ink); color: #fff; padding: 6px 12px; border-radius: 999px; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+  .vote-verify-pill .mini-orb { width: 7px; height: 7px; border-radius: 50%; background: var(--orb); }
+
+  /* Donation preview */
+  .donate-preview .donate-header { display: flex; align-items: center; gap: 10px; }
+  .donate-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #0a0a0a, #555); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .donate-name { font-size: 12px; font-weight: 700; }
+  .donate-handle { font-size: 10px; color: var(--muted); }
+  .donate-amount { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; text-align: center; margin-top: 6px; }
+  .donate-amount .da-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .donate-amount .da-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-family: 'Manrope', sans-serif; }
+  .donate-amount .da-value .ticker { font-variant-numeric: tabular-nums; }
+  .donate-amount .da-meta { font-size: 9px; color: var(--muted); margin-top: 4px; }
+  .donate-coin-flow { position: absolute; bottom: 70px; left: 50%; pointer-events: none; }
+  .donate-coin-flow .coin { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--orb); animation: coin-up 3s infinite ease-out; opacity: 0; }
+  .donate-coin-flow .coin.c1 { left: -30px; animation-delay: 0s; }
+  .donate-coin-flow .coin.c2 { left: 0; animation-delay: 0.6s; }
+  .donate-coin-flow .coin.c3 { left: 25px; animation-delay: 1.2s; }
+  @keyframes coin-up { 0% { transform: translateY(20px); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
+  .donate-btn { margin-top: auto; align-self: stretch; background: var(--ink); color: #fff; padding: 8px; border-radius: 999px; font-size: 11px; font-weight: 600; text-align: center; }
+
+  /* Quiz preview */
+  .quiz-q { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 600; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .quiz-opt { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: 10px; font-weight: 600; text-align: center; transition: all .3s; }
+  .quiz-opt.correct { animation: correctPick 4s infinite; }
+  @keyframes correctPick { 0%, 50%, 100% { background: #fff; border-color: var(--line); color: var(--ink); } 60%, 90% { background: var(--ink); border-color: var(--ink); color: #fff; } }
+  .quiz-reward { position: absolute; top: 14px; right: 14px; background: var(--ink); color: #fff; padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px; animation: reward-pop 4s infinite; opacity: 0; }
+  .quiz-reward .star { width: 6px; height: 6px; border-radius: 50%; background: var(--orb); }
+  @keyframes reward-pop { 0%, 55%, 100% { opacity: 0; transform: scale(0.7); } 65%, 90% { opacity: 1; transform: scale(1); } }
+
+  .ex-body { padding: 24px; flex: 1; display: flex; flex-direction: column; }
+  .ex-quote { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
+  .ex-prompt { font-size: 16px; line-height: 1.4; letter-spacing: -0.015em; font-weight: 600; color: var(--ink); margin-bottom: 18px; }
+  .ex-tags { margin-top: auto; display: flex; flex-wrap: wrap; gap: 5px; }
+  .ex-tag { font-size: 10px; padding: 4px 9px; background: var(--chip); border-radius: 999px; color: var(--ink-2); font-family: 'JetBrains Mono', monospace; }
+
+  /* ---------- WHY WORLDABLE — animated icons ---------- */
+  .why-wrap { background: var(--ink); color: #fff; border-radius: 32px; padding: 80px 56px; margin-top: 60px; position: relative; overflow: hidden; }
+  @media (max-width: 720px) { .why-wrap { padding: 56px 24px; border-radius: 24px; } }
+  .why-wrap::before { content: ""; position: absolute; top: -150px; right: -150px; width: 500px; height: 500px; border-radius: 50%; background: var(--orb); opacity: 0.18; filter: blur(20px); }
+  .why-grid { margin-top: 50px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; position: relative; z-index: 1; }
+  @media (max-width: 900px) { .why-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .why-grid { grid-template-columns: 1fr; } }
+  .why-item { border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 24px; background: rgba(255,255,255,0.03); transition: background .2s, border-color .2s; position: relative; overflow: hidden; }
+  .why-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+
+  .why-anim { width: 56px; height: 56px; margin-bottom: 16px; position: relative; }
+  .why-anim svg { width: 100%; height: 100%; overflow: visible; }
+  .wa-stroke { fill: none; stroke: #fff; stroke-width: 1.5; }
+
+  /* World App anim */
+  .wa-phone-screen { fill: #fff; opacity: 0.15; animation: phoneScreenPulse 2.5s infinite; }
+  @keyframes phoneScreenPulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.5; } }
+  .wa-phone-dot { fill: #fff; opacity: 0; animation: phoneDot 2.5s infinite; }
+  @keyframes phoneDot { 0%, 60%, 100% { opacity: 0; } 30% { opacity: 1; } }
+
+  /* MiniKit anim */
+  .wa-kit-dot { fill: #fff; animation: kitDot 2s infinite; }
+  .wa-kit-dot.kd2 { animation-delay: 0.3s; }
+  .wa-kit-dot.kd3 { animation-delay: 0.6s; }
+  .wa-kit-dot.kd4 { animation-delay: 0.9s; }
+  @keyframes kitDot { 0%, 70%, 100% { opacity: 0.5; r: 2; } 30% { opacity: 1; r: 3.5; } }
+  .wa-kit-line { stroke: #fff; stroke-width: 1; opacity: 0.3; stroke-dasharray: 2 2; animation: kitLine 2s infinite linear; }
+  @keyframes kitLine { to { stroke-dashoffset: -20; } }
+
+  /* World ID anim - concentric rings */
+  .wa-id-ring { fill: none; stroke: #fff; stroke-width: 1; animation: idRing 2.4s infinite ease-out; transform-origin: center; }
+  .wa-id-ring.r1 { animation-delay: 0s; }
+  .wa-id-ring.r2 { animation-delay: 0.6s; }
+  .wa-id-ring.r3 { animation-delay: 1.2s; }
+  @keyframes idRing { 0% { r: 6; opacity: 1; } 100% { r: 26; opacity: 0; } }
+  .wa-id-core { fill: #fff; }
+
+  /* Wallet Auth - signature draw */
+  .wa-sig { fill: none; stroke: #fff; stroke-width: 1.5; stroke-linecap: round; stroke-dasharray: 80; stroke-dashoffset: 80; animation: sigDraw 3s infinite; }
+  @keyframes sigDraw { 0%, 90%, 100% { stroke-dashoffset: 80; } 30%, 70% { stroke-dashoffset: 0; } }
+
+  /* Pay anim */
+  .wa-coin { fill: none; stroke: #fff; stroke-width: 1.5; animation: coinFlip 3s infinite; transform-origin: center; }
+  @keyframes coinFlip { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(180deg); } }
+  .wa-pay-text { fill: #fff; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; }
+  .wa-pay-arrow { stroke: #fff; stroke-width: 1; opacity: 0.5; stroke-dasharray: 2 2; animation: payArrow 2s infinite linear; }
+  @keyframes payArrow { to { stroke-dashoffset: -16; } }
+
+  /* Submission - checkmark */
+  .wa-check-circle { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 130; stroke-dashoffset: 130; animation: checkCircle 3s infinite; }
+  .wa-check-mark { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; animation: checkMark 3s infinite; }
+  @keyframes checkCircle { 0%, 90%, 100% { stroke-dashoffset: 130; } 40%, 80% { stroke-dashoffset: 0; } }
+  @keyframes checkMark { 0%, 45%, 100% { stroke-dashoffset: 24; } 60%, 85% { stroke-dashoffset: 0; } }
+
+  .why-item h4 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .why-item p { font-size: 13.5px; color: rgba(255,255,255,0.65); line-height: 1.55; }
+
+  /* ---------- MONETIZATION — revenue flow ---------- */
+  .rev-flow { margin-top: 60px; border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(180deg, #fafafa, #f0f0f0); padding: 48px 40px; position: relative; overflow: hidden; }
+  @media (max-width: 720px) { .rev-flow { padding: 32px 20px; } }
+  .rf-grid { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 24px; align-items: center; }
+  @media (max-width: 760px) { .rf-grid { grid-template-columns: 1fr; } }
+  .rf-node { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; text-align: center; }
+  .rf-node.source { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .rf-node .rf-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; margin-bottom: 10px; }
+  .rf-node .rf-value { font-size: 36px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .rf-node .rf-value .currency { font-size: 18px; opacity: 0.6; margin-right: 2px; }
+  .rf-node .rf-label { font-size: 13px; margin-top: 8px; opacity: 0.65; }
+  .rf-live-tag { display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 14px; padding: 4px 10px; border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; }
+  .rf-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ff4d4d; animation: rfLive 1.4s infinite; box-shadow: 0 0 8px #ff4d4d; }
+  @keyframes rfLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .rf-ad-mock { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px 12px; margin-bottom: 18px; text-align: left; min-height: 56px; }
+  .rf-ad-mock-label { font-size: 8px; letter-spacing: 0.16em; color: rgba(255,255,255,0.5); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; text-transform: uppercase; }
+  .rf-ad-mock-text { font-size: 12px; font-weight: 600; color: #fff; letter-spacing: -0.01em; line-height: 1.3; opacity: 0; animation: rfAdFade 1s forwards; }
+  @keyframes rfAdFade { to { opacity: 1; } }
+  .rf-source-mini { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+  .rf-source-mini .blip { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); animation: blip 1.5s infinite; }
+  .rf-source-mini .blip:nth-child(2) { animation-delay: 0.2s; }
+  .rf-source-mini .blip:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blip { 0%, 60%, 100% { background: rgba(255,255,255,0.3); transform: scale(1); } 30% { background: #fff; transform: scale(1.4); } }
+
+  .rf-splitter { position: relative; min-height: 200px; }
+  .rf-splitter svg { width: 100%; height: 100%; position: absolute; inset: 0; }
+  .rf-splitter .rf-path { fill: none; stroke: var(--ink); stroke-width: 1.5; opacity: 0.2; }
+  .rf-splitter .rf-flow-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 6; animation: flowLine 1.5s infinite linear; }
+  @keyframes flowLine { to { stroke-dashoffset: -20; } }
+  .rf-coin { fill: #0a0a0a; }
+  .rf-split-label { position: absolute; font-family: 'JetBrains Mono', monospace; font-size: 10px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--ink); white-space: nowrap; }
+  .rf-split-label.top { top: 18%; left: 55%; }
+  .rf-split-label.bottom { bottom: 18%; left: 55%; }
+  @media (max-width: 760px) { .rf-split-label { position: static; display: inline-block; margin: 4px; } }
+
+  .rf-targets { display: flex; flex-direction: column; gap: 12px; }
+  .rf-target { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .rf-target.major { background: #fff; border: 1px solid var(--ink); }
+  .rf-target .rf-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .rf-target .rf-tname { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .rf-target .rf-share { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .rf-target .rf-bar { margin-top: 10px; height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .rf-target .rf-bar > div { height: 100%; background: var(--ink); border-radius: 999px; animation: barLoad 2s forwards ease-out; }
+  .rf-target.major .rf-bar > div { width: 85%; }
+  .rf-target.minor .rf-bar > div { width: 15%; }
+  @keyframes barLoad { from { width: 0; } }
+
+  .money { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .money { grid-template-columns: 1fr; } }
+  .money-card { border: 1px solid var(--line); border-radius: 20px; padding: 28px; background: #fff; }
+  .money-card h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 10px; }
+  .money-card p { color: var(--muted); line-height: 1.6; font-size: 14px; }
+  .money-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .money-num::before { content: ""; width: 24px; height: 1px; background: var(--muted); display: inline-block; }
+  .money-list { margin-top: 16px; }
+  .money-list li { list-style: none; padding: 10px 0; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .money-list li:first-child { border-top: none; }
+  .money-list .val { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+  /* ---------- FINAL CTA ---------- */
+  .final { padding: 140px 0; text-align: center; border-top: 1px solid var(--line); position: relative; }
+  .final::before { content: ""; position: absolute; inset: 0; background: radial-gradient(600px 360px at 50% 50%, rgba(0,0,0,0.04), transparent 70%); pointer-events: none; }
+  .big-orb { width: 96px; height: 96px; border-radius: 50%; background: var(--orb); margin: 0 auto 32px; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.4); animation: float 6s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .final h2 { font-size: clamp(40px, 6vw, 80px); line-height: 1.0; letter-spacing: -0.04em; font-weight: 700; max-width: 820px; margin: 0 auto; }
+  .final p { margin-top: 24px; font-size: 18px; color: var(--muted); max-width: 540px; margin-left: auto; margin-right: auto; }
+  .waitlist { margin-top: 40px; display: flex; gap: 8px; max-width: 460px; margin-left: auto; margin-right: auto; background: #fff; border: 1px solid var(--line); padding: 6px; border-radius: 999px; }
+  .waitlist input { flex: 1; padding: 12px 18px; border: none; outline: none; font-family: inherit; font-size: 14px; background: transparent; color: var(--ink); }
+  .waitlist button { background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: background .2s; }
+  .waitlist button:hover { background: #222; }
+
+  /* ---------- FOOTER ---------- */
+  footer { border-top: 1px solid var(--line); padding: 48px 0 36px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+  .foot-links { display: flex; gap: 24px; font-size: 13px; color: var(--muted); }
+  .foot-links a:hover { color: var(--ink); }
+  .copy { font-size: 12px; color: var(--muted); }
+
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .8s ease, transform .8s ease; }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top">
+  <div class="wrap nav-inner">
+    <div class="logo">
+      <span class="orb"></span>
+      <span>Worldable</span>
+    </div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#examples">Examples</a>
+      <a href="#why">Why Worldable</a>
+      <a href="#earn">Earn</a>
+    </div>
+    <a href="#waitlist" class="nav-cta">Join waitlist</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pill"><span class="dot"></span> Built for World App · MiniKit native</div>
+    <h1 class="headline">
+      Build a World Mini App<br>
+      from a <em>sentence<span class="orb-inline"></span></em>
+    </h1>
+    <p class="sub">
+      Worldable turns plain English into a production-ready World Mini App — with World ID, Wallet Auth, and Pay wired in. No SDK setup. No templates. Just describe the app.
+    </p>
+    <div class="cta-row">
+      <a href="#waitlist" class="btn-primary">
+        Join the waitlist
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#how" class="btn-secondary">See how it works</a>
+    </div>
+
+    <div class="builder">
+      <div class="builder-bar">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="url">worldable.app/new</div>
+        <div style="width: 50px;"></div>
+      </div>
+      <div class="builder-body">
+        <div class="prompt-side">
+          <div class="label">Prompt</div>
+          <div class="prompt-box">
+            <span id="typed"></span><span class="caret"></span>
+          </div>
+          <button class="gen-btn">
+            <span style="width:14px;height:14px;border-radius:50%;background:var(--orb);display:inline-block;"></span>
+            Generate Mini App
+          </button>
+          <div class="chips">
+            <span class="chip">World ID</span>
+            <span class="chip">Wallet Auth</span>
+            <span class="chip">Pay (USDC)</span>
+            <span class="chip">MiniKit</span>
+          </div>
+        </div>
+        <div class="preview-side">
+          <div class="phone">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-status">
+                <span>9:41</span>
+                <span>●●● ◐ 100%</span>
+              </div>
+              <div class="phone-content">
+                <div class="app-title">One-person-one-vote</div>
+                <div class="vote-card">
+                  <strong>Should we open-source MiniKit?</strong>
+                  <span style="color:var(--muted);font-size:11px">Yes — 1,284 votes</span>
+                  <div class="bar"><div style="width:72%"></div></div>
+                </div>
+                <div class="vote-card">
+                  <strong>Add fiat ramps to World App?</strong>
+                  <span style="color:var(--muted);font-size:11px">Yes — 891 votes</span>
+                  <div class="bar"><div style="width:54%"></div></div>
+                </div>
+                <div class="verify-btn">
+                  <span class="mini-orb"></span>
+                  Verify with World ID
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="wrap">
+    <div class="eyebrow reveal">The gap</div>
+    <h2 class="section-title reveal">Anyone can build apps now.<br>But not for World.</h2>
+
+    <div class="problem-grid">
+      <div class="prob-card reveal">
+        <div class="prob-tag">The rest of the web</div>
+        <h3>AI builders made web apps trivial.</h3>
+        <p>Lovable, Bolt, Replit, Base44 — describe an idea, ship a working app. The bar to build dropped overnight, and creators flooded in.</p>
+        <div class="prob-viz prob-viz-light">
+          <span class="v-chip">prompt</span>
+          <span class="v-arrow">→</span>
+          <span class="v-chip">code</span>
+          <span class="v-arrow">→</span>
+          <span class="v-chip">deploy</span>
+          <span class="v-arrow">→</span>
+          <span class="v-result">✓ shipped</span>
+        </div>
+      </div>
+      <div class="prob-card dark reveal">
+        <div class="prob-tag">World today</div>
+        <h3>World Mini Apps still demand the full stack.</h3>
+        <p>MiniKit, World ID, Wallet Auth, Pay, deployment, submission. Too much for ordinary creators — even though World is where the most engaged crypto-native users live.</p>
+        <div class="stack-stack">
+          <div class="stack-row-x"><span class="marker">1</span> install MiniKit <span class="err">! config required</span></div>
+          <div class="stack-row-x"><span class="marker">2</span> wire World ID <span class="err">! verify cloud</span></div>
+          <div class="stack-row-x"><span class="marker">3</span> setup Wallet Auth <span class="err">! sig schema</span></div>
+          <div class="stack-row-x"><span class="marker">4</span> integrate Pay <span class="err">! USDC contract</span></div>
+          <div class="stack-row-x"><span class="marker">5</span> submission flow <span class="err">! review queue</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS — with big build viz -->
+<section id="how">
+  <div class="wrap">
+    <div class="eyebrow reveal">How it works</div>
+    <h2 class="section-title reveal">Type an idea.<br>Get a World Mini App.</h2>
+    <p class="section-sub reveal">Watch what happens between the prompt and the app. Worldable wires up auth, identity, payments, and submission — automatically.</p>
+
+    <!-- BIG ANIMATED BUILD VISUALIZATION -->
+    <div class="build-viz reveal">
+      <div class="bv-stage">
+        <div class="bv-tag">01 · Prompt</div>
+        <div class="bv-prompt-box">
+          <span id="bv-typed"></span><span class="caret"></span>
+        </div>
+      </div>
+
+      <div class="bv-connector">
+        <div class="bv-connector-line"></div>
+        <span class="bv-dot d1"></span>
+        <span class="bv-dot d2"></span>
+        <span class="bv-dot d3"></span>
+      </div>
+
+      <div class="bv-stage">
+        <div class="bv-tag">02 · Worldable engine</div>
+        <div class="bv-engine-canvas">
+          <svg class="bv-lines" viewBox="0 0 240 240" preserveAspectRatio="none">
+            <line class="l1" x1="120" y1="120" x2="36" y2="48"/>
+            <line class="l2" x1="120" y1="120" x2="204" y2="48"/>
+            <line class="l3" x1="120" y1="120" x2="36" y2="192"/>
+            <line class="l4" x1="120" y1="120" x2="204" y2="192"/>
+          </svg>
+          <div class="bv-core">
+            <span class="bv-core-orb"></span>
+          </div>
+          <div class="bv-core-ring"></div>
+          <div class="bv-core-ring r2"></div>
+          <div class="bv-node n-worldid"><span class="n-dot"></span>World ID</div>
+          <div class="bv-node n-wallet"><span class="n-dot"></span>Wallet</div>
+          <div class="bv-node n-pay"><span class="n-dot"></span>Pay</div>
+          <div class="bv-node n-minikit"><span class="n-dot"></span>MiniKit</div>
+          <div class="bv-code-stream">
+            <span class="cl">import { MiniKit }</span>
+            <span class="cl">await WorldID.verify()</span>
+            <span class="cl">Pay.send(usdc)</span>
+            <span class="cl">WalletAuth.signIn()</span>
+            <span class="cl">deploy()</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bv-connector">
+        <div class="bv-connector-line"></div>
+        <span class="bv-dot d1"></span>
+        <span class="bv-dot d2"></span>
+        <span class="bv-dot d3"></span>
+      </div>
+
+      <div class="bv-stage">
+        <div class="bv-tag">03 · Mini App</div>
+        <div class="bv-result-wrap">
+          <div class="bv-result-phone">
+            <div class="bv-result-screen">
+              <div class="bv-result-app-title">Vote</div>
+              <div class="bv-result-card">
+                <strong>Open-source MiniKit?</strong>
+                <div class="pct">Yes — 72%</div>
+                <div class="bv-result-bar"><div></div></div>
+              </div>
+              <div class="bv-result-card">
+                <strong>Add fiat ramps?</strong>
+                <div class="pct">Yes — 54%</div>
+                <div class="bv-result-bar"><div></div></div>
+              </div>
+              <div class="bv-result-verify">
+                <span class="mini-orb"></span> Verify
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 step cards -->
+    <div class="flow">
+      <div class="flow-step reveal">
+        <div class="flow-num">01</div>
+        <div class="flow-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4H13M3 8H13M3 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <h4>Prompt</h4>
+        <p>Describe the app you want.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-num">02</div>
+        <div class="flow-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg></div>
+        <h4>Generate</h4>
+        <p>MiniKit, World ID, Wallet, Pay.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-num">03</div>
+        <div class="flow-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="4" y="2" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M7 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <h4>Preview</h4>
+        <p>Live inside a simulated World App.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-num">04</div>
+        <div class="flow-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M11 3L13 5L5 13L2 14L3 11L11 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <h4>Edit</h4>
+        <p>Iterate by prompting or jump to code.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-num">05</div>
+        <div class="flow-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2L10 6L14 6.5L11 9.5L12 14L8 11.5L4 14L5 9.5L2 6.5L6 6L8 2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <h4>Launch</h4>
+        <p>One-click submit to the Mini App store.</p>
+      </div>
+      <div class="flow-step reveal">
+        <div class="flow-num">06</div>
+        <div class="flow-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 11L6 7L9 10L14 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 4H14V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h4>Monetize</h4>
+        <p>Built-in ad and promo revenue.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXAMPLES with mini app previews -->
+<section id="examples">
+  <div class="wrap">
+    <div class="eyebrow reveal">What people build</div>
+    <h2 class="section-title reveal">A sentence is enough.</h2>
+
+    <div class="examples">
+      <!-- Voting -->
+      <div class="ex-card reveal">
+        <div class="ex-preview">
+          <div class="ex-title">Open vote</div>
+          <div class="vote-row r1">
+            <div class="vr-q">Support proposal #12?</div>
+            <div class="vr-meta">1,284 verified votes</div>
+            <div class="vr-bar"><div></div></div>
+          </div>
+          <div class="vote-row r2">
+            <div class="vr-q">Allow forks?</div>
+            <div class="vr-meta">891 verified votes</div>
+            <div class="vr-bar"><div></div></div>
+          </div>
+          <div class="vote-verify-pill">
+            <span class="mini-orb"></span> Verified human · World ID
+          </div>
+        </div>
+        <div class="ex-body">
+          <div class="ex-quote">Prompt</div>
+          <div class="ex-prompt">"Create a one-person-one-vote app with World ID."</div>
+          <div class="ex-tags">
+            <span class="ex-tag">World ID</span>
+            <span class="ex-tag">Sybil-proof</span>
+            <span class="ex-tag">Governance</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donation -->
+      <div class="ex-card reveal">
+        <div class="ex-preview donate-preview">
+          <div class="donate-header">
+            <div class="donate-avatar">K</div>
+            <div>
+              <div class="donate-name">Support @kim</div>
+              <div class="donate-handle">Independent journalist</div>
+            </div>
+          </div>
+          <div class="donate-amount">
+            <div class="da-label">Total raised</div>
+            <div class="da-value"><span class="currency">$</span><span class="ticker" id="donate-counter">1,247</span></div>
+            <div class="da-meta">USDC · 84 supporters</div>
+          </div>
+          <div class="donate-coin-flow">
+            <span class="coin c1"></span>
+            <span class="coin c2"></span>
+            <span class="coin c3"></span>
+          </div>
+          <div class="donate-btn">Donate USDC</div>
+        </div>
+        <div class="ex-body">
+          <div class="ex-quote">Prompt</div>
+          <div class="ex-prompt">"Build a USDC donation Mini App for creators."</div>
+          <div class="ex-tags">
+            <span class="ex-tag">Wallet Auth</span>
+            <span class="ex-tag">Pay</span>
+            <span class="ex-tag">USDC</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div class="ex-card reveal">
+        <div class="ex-preview">
+          <div class="ex-title">Daily quiz</div>
+          <div class="quiz-q">Q: What does WLD power?</div>
+          <div class="quiz-options">
+            <div class="quiz-opt">Streaming</div>
+            <div class="quiz-opt correct">World network</div>
+            <div class="quiz-opt">Stablecoins</div>
+            <div class="quiz-opt">L2 fees</div>
+          </div>
+          <div class="quiz-reward"><span class="star"></span> +5 WLD claimed</div>
+        </div>
+        <div class="ex-body">
+          <div class="ex-quote">Prompt</div>
+          <div class="ex-prompt">"Make a quiz app where users can claim rewards."</div>
+          <div class="ex-tags">
+            <span class="ex-tag">World ID</span>
+            <span class="ex-tag">Rewards</span>
+            <span class="ex-tag">Pay</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY WORLDABLE with animated icons -->
+<section id="why" style="border-top: none;">
+  <div class="wrap">
+    <div class="eyebrow reveal">Why Worldable</div>
+    <h2 class="section-title reveal">Not a generic app builder.<br>A World-native one.</h2>
+
+    <div class="why-wrap reveal">
+      <div style="max-width: 560px; position: relative; z-index: 1;">
+        <h3 style="font-size: 32px; letter-spacing: -0.03em; font-weight: 700; line-height: 1.1;">
+          Every app ships with the World stack — already wired.
+        </h3>
+        <p style="margin-top: 18px; color: rgba(255,255,255,0.7); font-size: 16px; line-height: 1.6;">
+          Worldable was built for the World ecosystem from day one. Auth, identity, payments, deployment — handled. Creators ship without learning the stack.
+        </p>
+      </div>
+
+      <div class="why-grid">
+        <div class="why-item">
+          <div class="why-anim">
+            <svg viewBox="0 0 56 56">
+              <rect x="18" y="6" width="20" height="44" rx="3" class="wa-stroke"/>
+              <rect x="20" y="11" width="16" height="32" class="wa-phone-screen"/>
+              <circle cx="28" cy="47" r="1.5" class="wa-stroke"/>
+              <circle cx="28" cy="22" r="2" class="wa-phone-dot"/>
+            </svg>
+          </div>
+          <h4>World App</h4>
+          <p>Native rendering inside World App from the first preview.</p>
+        </div>
+
+        <div class="why-item">
+          <div class="why-anim">
+            <svg viewBox="0 0 56 56">
+              <line x1="18" y1="18" x2="38" y2="18" class="wa-kit-line"/>
+              <line x1="38" y1="18" x2="38" y2="38" class="wa-kit-line"/>
+              <line x1="38" y1="38" x2="18" y2="38" class="wa-kit-line"/>
+              <line x1="18" y1="38" x2="18" y2="18" class="wa-kit-line"/>
+              <line x1="18" y1="18" x2="38" y2="38" class="wa-kit-line"/>
+              <line x1="38" y1="18" x2="18" y2="38" class="wa-kit-line"/>
+              <circle cx="18" cy="18" r="2.5" class="wa-kit-dot kd1"/>
+              <circle cx="38" cy="18" r="2.5" class="wa-kit-dot kd2"/>
+              <circle cx="38" cy="38" r="2.5" class="wa-kit-dot kd3"/>
+              <circle cx="18" cy="38" r="2.5" class="wa-kit-dot kd4"/>
+            </svg>
+          </div>
+          <h4>MiniKit</h4>
+          <p>All MiniKit primitives available without a single import.</p>
+        </div>
+
+        <div class="why-item">
+          <div class="why-anim">
+            <svg viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="6" class="wa-id-ring r1"/>
+              <circle cx="28" cy="28" r="6" class="wa-id-ring r2"/>
+              <circle cx="28" cy="28" r="6" class="wa-id-ring r3"/>
+              <circle cx="28" cy="28" r="5" class="wa-id-core"/>
+            </svg>
+          </div>
+          <h4>World ID</h4>
+          <p>Sybil resistance baked in. One real person, one action.</p>
+        </div>
+
+        <div class="why-item">
+          <div class="why-anim">
+            <svg viewBox="0 0 56 56">
+              <rect x="8" y="20" width="40" height="22" rx="3" class="wa-stroke" stroke-opacity="0.3"/>
+              <path d="M 12 32 Q 16 22, 20 32 T 28 32 T 36 32 L 44 32" class="wa-sig"/>
+            </svg>
+          </div>
+          <h4>Wallet Auth</h4>
+          <p>Sign-in via World wallet — zero config from you.</p>
+        </div>
+
+        <div class="why-item">
+          <div class="why-anim">
+            <svg viewBox="0 0 56 56">
+              <line x1="10" y1="28" x2="20" y2="28" class="wa-pay-arrow"/>
+              <line x1="36" y1="28" x2="46" y2="28" class="wa-pay-arrow"/>
+              <circle cx="28" cy="28" r="12" class="wa-coin"/>
+              <text x="28" y="33" text-anchor="middle" class="wa-pay-text">$</text>
+            </svg>
+          </div>
+          <h4>Pay</h4>
+          <p>USDC, WLD, fiat — accept what your users actually use.</p>
+        </div>
+
+        <div class="why-item">
+          <div class="why-anim">
+            <svg viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="20" class="wa-check-circle"/>
+              <path d="M 18 28 L 25 35 L 38 22" class="wa-check-mark"/>
+            </svg>
+          </div>
+          <h4>Submission</h4>
+          <p>One-click to the World Mini App store. We handle the paperwork.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MONETIZATION with revenue flow -->
+<section id="earn">
+  <div class="wrap">
+    <div class="eyebrow reveal">Monetization</div>
+    <h2 class="section-title reveal">Creators build.<br>Creators earn.</h2>
+    <p class="section-sub reveal">Every Mini App ships with built-in <strong style="color: var(--ink); font-weight: 700;">in-app ad slots</strong>. Creators keep 85% of the ad revenue, paid out automatically. Worldable's fee only applies to revenue we enable.</p>
+
+    <!-- Revenue flow viz -->
+    <div class="rev-flow reveal">
+      <div class="rf-grid">
+        <div class="rf-node source">
+          <div class="rf-live-tag">
+            <span class="rf-live-dot"></span>
+            <span>Live ad slot</span>
+          </div>
+          <div class="rf-ad-mock">
+            <div class="rf-ad-mock-label">Sponsored</div>
+            <div class="rf-ad-mock-text" id="rf-ad-rotator">Try Stellar Pay — earn 2 WLD</div>
+          </div>
+          <div class="rf-eyebrow">In-app ad revenue</div>
+          <div class="rf-value"><span class="currency">$</span><span id="rf-total">12,400</span></div>
+          <div class="rf-label">Monthly · paid in USDC</div>
+          <div class="rf-source-mini">
+            <span class="blip"></span>
+            <span class="blip"></span>
+            <span class="blip"></span>
+          </div>
+        </div>
+
+        <div class="rf-splitter">
+          <svg viewBox="0 0 300 200" preserveAspectRatio="none">
+            <path class="rf-path" d="M 0 100 L 150 100 L 280 40"/>
+            <path class="rf-path" d="M 150 100 L 280 160"/>
+            <path class="rf-flow-line" d="M 0 100 L 150 100 L 280 40"/>
+            <path class="rf-flow-line" d="M 150 100 L 280 160" style="animation-delay: 0.3s"/>
+            <circle r="3" cx="150" cy="100" class="rf-coin"/>
+          </svg>
+          <div class="rf-split-label top">85% ad rev → creator</div>
+          <div class="rf-split-label bottom">15% → platform fee</div>
+        </div>
+
+        <div class="rf-targets">
+          <div class="rf-target major">
+            <div class="rf-eyebrow">You</div>
+            <div class="rf-tname">Creator ad earnings</div>
+            <div class="rf-share">$10,540 · 85%</div>
+            <div class="rf-bar"><div></div></div>
+          </div>
+          <div class="rf-target minor">
+            <div class="rf-eyebrow">Worldable</div>
+            <div class="rf-tname">Platform fee on ads</div>
+            <div class="rf-share">$1,860 · 15%</div>
+            <div class="rf-bar"><div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="money">
+      <div class="money-card reveal">
+        <div class="money-num">For creators</div>
+        <h3>Earn from the apps you ship.</h3>
+        <p>Built-in ad and promotion slots, on by default but always optional. You keep the majority of what your app generates.</p>
+        <ul class="money-list">
+          <li><span>Ad revenue share</span><span class="val">creator-first</span></li>
+          <li><span>Promotion slots</span><span class="val">opt-in</span></li>
+          <li><span>In-app payments</span><span class="val">100% to you</span></li>
+        </ul>
+      </div>
+      <div class="money-card reveal">
+        <div class="money-num">For Worldable</div>
+        <h3>Pay for what you generate.</h3>
+        <p>AI generation, edits, debugging, and launch support run on credits or a native AI compute token. You only pay for what you ship.</p>
+        <ul class="money-list">
+          <li><span>Generation</span><span class="val">credits</span></li>
+          <li><span>Edits & debugging</span><span class="val">credits</span></li>
+          <li><span>Launch support</span><span class="val">credits / token</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final" id="waitlist" style="border-top: 1px solid var(--line);">
+  <div class="wrap">
+    <div class="big-orb"></div>
+    <h2>Build your first World Mini App from a sentence.</h2>
+    <p>Get early access. Be among the first creators to ship on World without the stack.</p>
+    <form class="waitlist" onsubmit="event.preventDefault(); this.querySelector('button').textContent='✓ On the list';">
+      <input type="email" placeholder="you@email.com" required />
+      <button type="submit">Get early access</button>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap foot">
+    <div class="logo">
+      <span class="orb"></span>
+      <span>Worldable</span>
+    </div>
+    <div class="foot-links">
+      <a href="#">Docs</a>
+      <a href="#">Examples</a>
+      <a href="#">Pricing</a>
+      <a href="#">X / Twitter</a>
+    </div>
+    <div class="copy">© 2026 Worldable. Built for the World ecosystem.</div>
+  </div>
+</footer>
+
+<script>
+  // Hero typewriter
+  const prompts = [
+    "Create a one-person-one-vote app with World ID.",
+    "Build a USDC donation Mini App for creators.",
+    "Make a quiz app where users can claim rewards.",
+    "Ship a verified-human-only group chat."
+  ];
+  const el = document.getElementById('typed');
+  let pi = 0, ci = 0, deleting = false;
+  function type() {
+    const cur = prompts[pi];
+    if (!deleting) {
+      el.textContent = cur.slice(0, ++ci);
+      if (ci === cur.length) { deleting = true; setTimeout(type, 1800); return; }
+    } else {
+      el.textContent = cur.slice(0, --ci);
+      if (ci === 0) { deleting = false; pi = (pi + 1) % prompts.length; }
+    }
+    setTimeout(type, deleting ? 22 : 42);
+  }
+  type();
+
+  // Build viz typewriter (synced with main flow)
+  const bvPrompts = [
+    "Create a one-person-one-vote app...",
+    "Build a USDC donation Mini App...",
+    "Make a quiz app with rewards...",
+    "Ship a verified-human group chat..."
+  ];
+  const bvEl = document.getElementById('bv-typed');
+  let bvPi = 0, bvCi = 0, bvDel = false;
+  function bvType() {
+    if (!bvEl) return;
+    const cur = bvPrompts[bvPi];
+    if (!bvDel) {
+      bvEl.textContent = cur.slice(0, ++bvCi);
+      if (bvCi === cur.length) { bvDel = true; setTimeout(bvType, 2400); return; }
+    } else {
+      bvEl.textContent = cur.slice(0, --bvCi);
+      if (bvCi === 0) { bvDel = false; bvPi = (bvPi + 1) % bvPrompts.length; }
+    }
+    setTimeout(bvType, bvDel ? 22 : 48);
+  }
+  bvType();
+
+  // Donate counter
+  const dc = document.getElementById('donate-counter');
+  if (dc) {
+    let val = 1247;
+    setInterval(() => {
+      val += Math.floor(Math.random() * 7) + 1;
+      dc.textContent = val.toLocaleString();
+    }, 1800);
+  }
+
+  // Revenue total counter
+  const rfTotal = document.getElementById('rf-total');
+  if (rfTotal) {
+    let v = 12400;
+    setInterval(() => {
+      v += Math.floor(Math.random() * 20) + 5;
+      rfTotal.textContent = v.toLocaleString();
+    }, 1500);
+  }
+
+  // Ad slot rotator
+  const adRotator = document.getElementById('rf-ad-rotator');
+  if (adRotator) {
+    const ads = [
+      "Try Stellar Pay — earn 2 WLD",
+      "New Mini App: Vox · verified chat",
+      "Swap USDC at 0% fee",
+      "Boost your post for 5 WLD",
+      "Sponsored: Verified human poll"
+    ];
+    let ai = 0;
+    setInterval(() => {
+      ai = (ai + 1) % ads.length;
+      adRotator.style.animation = 'none';
+      adRotator.offsetHeight;
+      adRotator.textContent = ads[ai];
+      adRotator.style.animation = '';
+    }, 2400);
+  }
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
